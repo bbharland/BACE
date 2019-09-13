@@ -1,5 +1,7 @@
 import numpy as np
-
+"""
+Testing some change to a file in git project
+"""
 def calc_occam_terms_Mackay(C):
     "Return log(OF), log(sigma_T), log(sigma_{T|C}), log(P(C|L)), log(P(C|TL))"
     T = calc_T_max_L(C)
