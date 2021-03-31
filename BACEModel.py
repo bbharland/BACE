@@ -3,14 +3,15 @@ import matplotlib.pyplot as plt
 import networkx as nx
 # from LogBF import LogBF
 
+
 class BACEModel(object):
     """
     The base class for doing BACE clustering
-    
+
         state_list : keep track of which states are being merged
             - initially: state_list = [[0], [1], [2], [3], [4], [5], ...]
             - later on:  state_list = [[0, 1], [2], [3, 4, 5], ...]
-     
+
     Methods:
         __init__(figdir='./')             calls _init_C_matrix()!
         _init_C_matrix()                  define in child class!
@@ -18,7 +19,7 @@ class BACEModel(object):
 
         calc_log_BF_matrix()              calc log(BF) for all state pairs
         merge_states(alpha)               merge states and update state_list
-        merge_best_pair_states()   
+        merge_best_pair_states()
         _merge_states_C(alpha)
         _merge_state_labels(alpha)
 
@@ -31,13 +32,13 @@ class BACEModel(object):
     # log_BF_matrix = None   # upper-triangular matrix, log(BF) for state pairs
     # state_list = None      # keep track of states being merged
     # figdir = None          # directory to put figures
-    
-    #=====================================================================
-    #
-    #   Initialization methods
-    #
-    #=====================================================================
-    
+
+#=====================================================================
+#
+#   Initialization methods
+#
+#=====================================================================
+
     def __init__(self, figdir='./'):
         """
         All child classes use this __init__
@@ -47,14 +48,14 @@ class BACEModel(object):
             self.figdir = figdir
         else:
             self.figdir = figdir + '/'
-        
+
         self._init_C_matrix()
         self.N = self.C.sum()
         self.state_list = [[n] for n in range(self.C.shape[0])]
-    
+
     def _init_C_matrix(self):
         raise RuntimeError('Trying to run BACEModel._init_C_matrix()')
-        
+
     def _init_C_from_node_edge_table(self, node_table, edge_table):
         """
         Use node_table and edge_table to fill C matrix
@@ -68,26 +69,26 @@ class BACEModel(object):
             for (i, j) in edges:
                 self.C[i, j] = count
                 self.C[j, i] = count
-        
-    #=====================================================================
-    #
-    #   Methods for merging pairs of states together
-    #
-    #=====================================================================
-                
+
+#=====================================================================
+#
+#   Methods for merging pairs of states together
+#
+#=====================================================================
+
     def calc_log_BF_matrix(self):
         """
         Calculate (upper-triangular) matrix of log(BF)'s
         - do this only for pairs of states that are connected (C_ij > 0)
         """
         from itertools import combinations
-    
+
         n = self.C.shape[0]
         P = self.C / self.N
         p = P.sum(axis=1)
         deltaF = self._calc_delta_F(n)
         self.log_BF_matrix = np.zeros((n, n))
-        
+
         for i, j in combinations(range(n), 2):
             if P[i, j] > 0:
                 not_ij = [k for k in range(n) if k not in (i, j)]
@@ -105,20 +106,20 @@ class BACEModel(object):
                     PlogP = P_an * np.log(P_an / Q_an)
                     PlogP[np.isneginf(PlogP) | np.isnan(PlogP)] = 0
                 divPQ += 2 * PlogP.sum()
-                
+
                 self.log_BF_matrix[i, j] = deltaF + divPQ - divpq
 
     def _calc_delta_F(self, n):
-        return self._calc_F(n) - self._calc_F(n-1)
+        return self._calc_F(n) - self._calc_F(n - 1)
 
     def _calc_F(self, n):
-        return -n*n*np.log(n) / self.N
+        return -n * n * np.log(n) / self.N
 
     def _calc_delta_F_prior(self, n):
-        return self._calc_F_prior(n) - self._calc_F_prior(n-1)
+        return self._calc_F_prior(n) - self._calc_F_prior(n - 1)
 
     def _calc_F_prior(self, n):
-        # return (1 - (n*n / self.N)) * np.log(n)
+        return (1 - (n * n / self.N)) * np.log(n)
 
     def merge_states(self, alpha):
         """
@@ -127,7 +128,7 @@ class BACEModel(object):
         """
         self._merge_states_C(alpha)
         self._merge_state_labels(alpha)
-    
+
     def merge_best_pair_states(self):
         """
         1. The log(BF) matrix must already be computed!
@@ -138,12 +139,12 @@ class BACEModel(object):
         if self.log_BF_matrix is None:
             raise RuntimeError('log(BF) matrix is not calculated')
 
-        alpha = list(np.unravel_index(self.log_BF_matrix.argmin(), 
+        alpha = list(np.unravel_index(self.log_BF_matrix.argmin(),
                                       self.log_BF_matrix.shape))
         self._merge_states_C(alpha)
         self._merge_state_labels(alpha)
         self.log_BF_matrix = None
-    
+
     def _merge_states_C(self, alpha):
         """
         Update the C matrix by merging together all states in alpha
@@ -151,14 +152,14 @@ class BACEModel(object):
         not_alpha = [i for i in range(self.C.shape[0]) if i not in alpha]
         a = np.array(alpha)
         na = np.array(not_alpha)
-        
+
         C_aj = self.C[a, :].sum(axis=0)
         C_new = np.vstack((C_aj, self.C[na, :]))
         C_ia = C_new[:, a]
         C_ia = C_ia.sum(axis=1).reshape(C_new.shape[0], 1)
         C_new = np.hstack((C_ia, C_new[:, na]))
         self.C = C_new
-    
+
     def _merge_state_labels(self, alpha):
         """
         Update state_labels, merging together state indices in alpha
@@ -175,12 +176,12 @@ class BACEModel(object):
 
         # prepend the set of alpha state labels at start of 'state_list'
         self.state_list.insert(0, alpha_states)
-        
-    #=====================================================================
-    #
-    #   Visualization with networkx
-    #
-    #===================================================================== 
+
+#=====================================================================
+#
+#   Visualization with networkx
+#
+#=====================================================================
 
     def draw_graph(self, edge_factor, edge_matrix, title):
         """
@@ -188,7 +189,8 @@ class BACEModel(object):
         edges showing contents of edge_matrix with line thickness scaled
         by edge_factor
         """
-        labels, G = self._build_graph(weight_matrix=(edge_matrix * edge_factor))
+        labels, G = self._build_graph(
+            weight_matrix=(edge_matrix * edge_factor))
         weights = [G[i][j]['weight'] for i, j in G.edges()]
 
         pos = nx.spring_layout(G)
@@ -199,14 +201,15 @@ class BACEModel(object):
         _ = nx.draw_networkx_edges(G, pos, edgelist=G.edges, alpha=0.5,
                                    width=weights, edge_color='black')
         plt.axis('off')
-        plt.savefig(self.figdir + title, dpi=200) 
+        plt.savefig(self.figdir + title, dpi=200)
         plt.show()
 
     def draw_graph_ax(self, ax, edge_factor, edge_matrix):
         """
         Draw graph to supplied axes object
         """
-        labels, G = self._build_graph(weight_matrix=(edge_matrix * edge_factor))
+        labels, G = self._build_graph(
+            weight_matrix=(edge_matrix * edge_factor))
         weights = [G[i][j]['weight'] for i, j in G.edges()]
 
         pos = nx.spring_layout(G)
@@ -244,15 +247,15 @@ class BACEModel(object):
                                    node_size=1000, alpha=1)
         _ = nx.draw_networkx_labels(G, pos, labels,
                                     font_size=12, alpha=1)
-        edges = nx.draw_networkx_edges(G, pos, edgelist=G.edges, 
-                                       alpha=0.8, width=weights, 
-                                       edge_color=bfvals, 
+        edges = nx.draw_networkx_edges(G, pos, edgelist=G.edges,
+                                       alpha=0.8, width=weights,
+                                       edge_color=bfvals,
                                        edge_cmap=plt.cm.viridis)
         plt.axis('off')
         plt.colorbar(edges)
-        plt.savefig(self.figdir + title, dpi=200) 
-        plt.show()         
-        
+        plt.savefig(self.figdir + title, dpi=200)
+        plt.show()
+
     def _build_graph(self, weight_matrix):
         """
         Parameters:
@@ -273,15 +276,8 @@ class BACEModel(object):
 
         # add edges with weights
         for i in range(len(node_list)):
-            for j in range(i+1, len(node_list)):
+            for j in range(i + 1, len(node_list)):
                 if weight_matrix[i, j] > 0:
-                    G.add_edge(node_list[i], node_list[j], 
+                    G.add_edge(node_list[i], node_list[j],
                                weight=weight_matrix[i, j])
         return labels, G
-
-
-
-
-
-
-    

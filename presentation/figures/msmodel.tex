@@ -1,0 +1,66 @@
+\documentclass{article}
+\usepackage{tikz}
+\usetikzlibrary{fit,positioning,arrows,automata,calc}
+\usetikzlibrary{external}
+\tikzexternalize
+
+\begin{document}
+% \begin{tikzpicture}
+%   \node[draw=none] (Microstates) {\textrm{Microstates}};
+%   \node[] (x1) [right=of Microstates] {$x_1$};
+%   \node[] (x2) [right=of x1] {$x_2$};
+%   \node[] (x3) [right=of x2] {$x_3$};
+%   \node[] (xN) [right=of x3] {$x_N$};
+%   \node[] (y1) [below=of x1] {$y_1$};
+%   \node[] (y2) [below=of x2] {$y_2$};
+%   \node[] (y3) [below=of x3] {$y_3$};
+%   \node[] (yN) [below=of xN] {$y_N$};
+%   \node[draw=none,left=of y1] (Macrostates) {\textrm{Macrostates}};
+%   \path (y1) edge [-latex] (y2)
+%         (y2) edge [-latex] (y3)
+%         (y3) -- node[auto=false]{\ldots} (yN);
+%   \path (y1) edge [-latex] (x1);
+%   \path (y2) edge [-latex] (x2);
+%   \path (y3) edge [-latex] (x3);
+%   \path (yN) edge [-latex] (xN);
+% \end{tikzpicture}
+
+\tikzsetnextfilename{tikzmicrostates}
+\begin{tikzpicture}
+  \node[] (x1) {$X_1$};
+  \node[] (x2) [right=of x1] {};
+  \node[] (x3) [right=of x2] {$X_t$};
+  \node[] (x4) [right=of x3] {$X_{t+1}$};
+  \node[] (x5) [right=of x4] {};
+  \node[] (x6) [right=of x5] {$X_N$};
+  \path (x1) edge [-latex] (x2)
+        (x2) -- node[auto=false]{\ldots} (x3);
+  \path (x3) edge [-latex] (x4)
+        (x4) -- node[auto=false]{\ldots} (x5);
+  \path (x5) edge [-latex] (x6);
+\end{tikzpicture}
+
+\tikzsetnextfilename{tikzmacrostates}
+\begin{tikzpicture}
+  \node[] (y1) {$Y_1$};
+  \node[] (y2) [right=of y1] {};
+  \node[] (y3) [right=of y2] {$Y_t$};
+  \node[] (y4) [right=of y3] {$Y_{t+1}$};
+  \node[] (y5) [right=of y4] {};
+  \node[] (y6) [right=of y5] {$Y_N$};
+  \node[] (x1) [above=of y1] {$X_1$};
+  \node[] (x3) [above=of y3] {$X_t$};
+  \node[] (x4) [above=of y4] {$X_{t+1}$};
+  \node[] (x6) [above=of y6] {$X_N$};
+  \path (y1) edge [-latex] (y2)
+        (y2) -- node[auto=false]{\ldots} (y3);
+  \path (y3) edge [-latex] (y4)
+        (y4) -- node[auto=false]{\ldots} (y5);
+  \path (y5) edge [-latex] (y6);
+  \path (y1) edge [-latex] (x1);
+  \path (y3) edge [-latex] (x3);
+  \path (y4) edge [-latex] (x4);
+  \path (y6) edge [-latex] (x6);
+\end{tikzpicture}
+
+\end{document}
